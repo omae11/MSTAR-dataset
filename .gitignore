@@ -1,0 +1,29 @@
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+ehthumbs_vista.db
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vs/
+
+# Python artifacts (if you drop a loader script in here later)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Temporary / partial downloads
+*.tmp
+*.part
+*.crdownload
+
+# Disk image leftovers
+*.iso
+*.img

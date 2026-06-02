@@ -1,0 +1,23 @@
+MSTAR Public Release License Notice
+====================================
+
+The MSTAR (Moving and Stationary Target Acquisition and Recognition) dataset
+contained in this repository was publicly released by the U.S. Department of
+Defense (specifically the Air Force Research Laboratory, AFRL) for research
+purposes.
+
+This redistribution is provided "as-is" for non-commercial academic research
+and educational use only. Users of this dataset agree to:
+
+  1. Use the data solely for research and educational purposes.
+  2. Not redistribute the data as part of any commercial product or service.
+  3. Cite the original MSTAR public release in any publication that results
+     from its use (see README.md for the standard citation).
+  4. Acknowledge that the data is provided without any warranty of any kind.
+
+The U.S. Government and the maintainers of this mirror assume no responsibility
+for the use, misuse, or results obtained from this data.
+
+For the original distribution terms, contact the Sensors Directorate of the
+Air Force Research Laboratory (AFRL/RYAP), Wright-Patterson Air Force Base,
+Ohio, USA.
