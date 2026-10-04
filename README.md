@@ -9,7 +9,7 @@
 | 子集 | 格式 | 大小 | 说明 |
 |------|------|------|------|
 | [`soc/`](./soc) | 强度图 (.jpg) | ~11 MB | 由 `soc_complex/` 复数数据检波后生成的实值强度图（158×158，8-bit 灰度），方便直接喂给常规 CV 模型 |
-| [`soc_complex/`](./soc_complex) | 复数 (.000 / .025) | ~923 MB | SOC 数据集的原始复数 SAR 数据（实部 + 虚部），可自行检波得到幅度/强度/相位图 |
+| [`soc_complex/`](./soc_complex) | 复数（扩展名因类别而异，见下） | ~923 MB | SOC 数据集的原始复数 SAR 数据（幅度块 + 相位块），可自行检波得到幅度/强度/相位图 |
 
 > 两个子集 **文件名和目录结构完全一致**，只需把 dataloader 指向另一个根目录，就能在强度图和复数输入之间切换。
 
@@ -84,16 +84,13 @@ MSTAR/
 
 ## 文件命名规则
 
-`soc_complex/` 中的文件遵循以下规则：
-
-```
-<目标序列号>_<序号>.000   （训练，17° 俯仰）
-<目标序列号>_<序号>.025   （测试， 15° 俯仰）
-```
+`soc_complex/` 下按 `train/`（17° 俯仰）/ `test/`（15° 俯仰）目录区分训练测试。
+**扩展名随目标类别而异**（实测：2S1→`.000`，BMP2→`.000`，BRDM2→`.001`，T72→`.015`，ZSU234→`.026` 等），
+请勿用扩展名判断训练/测试切分。
 
 示例：
-- `HB14931.000` — 训练切片
-- `HB14931.025` — 同一目标在不同俯仰角下的测试切片
+- `soc_complex/train/2S1/HB14931.000` — 2S1 训练切片
+- `soc_complex/test/T72/HB03335.015` — T72 测试切片
 
 `soc/` 中的强度图使用相同的基本文件名，后缀为 `.jpg`（每张 158×158，8-bit 灰度）。
 
@@ -117,17 +114,39 @@ dataset = datasets.ImageFolder(
 print(f'{len(dataset)} 个训练样本，{len(dataset.classes)} 个类别')
 ```
 
-### Python — 复数 SAR (.000) 数据加载
+### Python — 复数 SAR 数据加载
 
 ```python
+import re
 import numpy as np
-from pathlib import Path
 
 def load_complex_chip(path):
+    """读取单个复数切片，返回复数图像（尺寸由文件头决定）。
+
+    文件格式（Phoenix 格式，实测）：
+      Phoenix ASCII 文本头（长度由头内 PhoenixHeaderLength 给出，
+      实测 1594/1973/1976 字节不等，请勿写死）
+      + NumberOfColumns × NumberOfRows 大端 float32 幅度块
+      + NumberOfColumns × NumberOfRows 大端 float32 相位块（弧度）
+    复数图像 = 幅度 × exp(1j × 相位）。
+    注意：不是实部/虚部交错存储，也没有统一的 128×128 尺寸。
+    """
     with open(path, 'rb') as f:
-        data = np.frombuffer(f.read(), dtype='>f4')
-    re, im = data[0::2], data[1::2]
-    return (re + 1j * im).reshape(128, 128)  # 请根据实际数据尺寸调整
+        raw = f.read()
+    head = raw[:4096].decode('ascii', errors='replace')
+
+    def field(key):
+        m = re.search(r'^' + key + r'\s*=\s*([0-9]+)', head, re.M)
+        return int(m.group(1))
+
+    hlen = field('PhoenixHeaderLength')
+    ncol = field('NumberOfColumns')
+    nrow = field('NumberOfRows')
+    data = np.frombuffer(raw[hlen:], dtype='>f4')
+    n = nrow * ncol
+    mag = data[:n].reshape(nrow, ncol)
+    pha = data[n:2 * n].reshape(nrow, ncol)
+    return mag * np.exp(1j * pha)
 ```
 
 ---
